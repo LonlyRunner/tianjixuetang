@@ -1,0 +1,55 @@
+# =====================================================================
+# aigc-service 的 nacos 配置模板
+# =====================================================================
+# 使用方法：
+#   1. 打开 nacos 控制台（http://nacos.tianji.com，nacos/nacos）
+#   2. 在命名空间 f923fb34-cb0a-4c06-8fca-ad61ea61a3f0 中
+#      新建配置：Data ID = aigc-service.yaml，Group = DEFAULT_GROUP，格式 = YAML
+#   3. 将本文件内容粘贴进去，替换其中的 API Key 后发布
+#   4. 重启 aigc-service
+# =====================================================================
+
+tj:
+  ai:
+    dashscope:
+      # 阿里百炼（DashScope）API Key：https://bailian.console.aliyun.com/
+      # 建议配置环境变量 ALIYUN_API_KEY，也可以直接把 key 写在这里
+      key: ${ALIYUN_API_KEY:请替换成你自己的阿里百炼key}
+      # chat-type=APP（百炼应用模式）时才需要，ENHANCE/ROUTE 模式可忽略：
+      # app-agent:
+      #   id: 你的百炼应用id
+      #   tools:
+      #     - queryCourseById
+
+spring:
+  ai:
+    # 阿里百炼 DashScope：对话模型 + 向量模型
+    dashscope:
+      api-key: ${tj.ai.dashscope.key}
+      chat:
+        enabled: true
+        options:
+          model: qwen-plus
+          # model: qwen2.5-1.5b-instruct  # 免费模型
+      embedding:
+        enabled: true
+        options:
+          model: text-embedding-v3   # 向量模型
+          dimensions: 1024           # 向量维度
+    # OpenAI 兼容接口：供 AI文本处理（POST /chat/text）、语音等功能使用
+    # 没有 OpenAI key 时，可直接复用百炼的 OpenAI 兼容模式（如下示例）
+    openai:
+      api-key: ${OPENAI_API_KEY:${tj.ai.dashscope.key}}
+      base-url: ${OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:qwen-plus}
+    # 向量库：Elasticsearch（chat-type=ENHANCE 的 RAG 增强需要）
+    vectorstore:
+      elasticsearch:
+        initialize-schema: true      # 自动创建向量索引
+        dimensions: 1024             # 与 embedding 维度保持一致
+        index-name: tianji_course_vector
+        similarity: cosine
+  elasticsearch:
+    uris: http://es.tianji.com:9200  # 课程虚拟机中的 ES
