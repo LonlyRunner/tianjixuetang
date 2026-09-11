@@ -30,3 +30,22 @@ COMMENT='对话session'
 COLLATE='utf8mb4_bin'
 ENGINE=InnoDB
 ;
+
+-- ---------------------------------------------------------------------
+-- 会话记忆消息表（基于MySQL的会话记忆存储，tj.ai.memory.type=MYSQL 时使用）
+-- 实现类：com.tianji.aigc.memory.jdbc.JdbcChatMemoryRepository
+-- Redis / MongoDB 方式无需此表
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `chat_message` (
+	`id` BIGINT(19) NOT NULL COMMENT '数据id，雪花算法，同时保证插入顺序',
+	`conversation_id` VARCHAR(64) NOT NULL COMMENT '对话id，规则：用户id_会话id' COLLATE 'utf8mb4_bin',
+	`message_type` VARCHAR(16) NOT NULL COMMENT '消息类型：SYSTEM/USER/ASSISTANT/TOOL' COLLATE 'utf8mb4_bin',
+	`content` TEXT NOT NULL COMMENT '消息内容，MessageUtil序列化后的JSON' COLLATE 'utf8mb4_bin',
+	`create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `conversation_id_index` (`conversation_id`, `id`) USING BTREE
+)
+COMMENT='会话记忆消息'
+COLLATE='utf8mb4_bin'
+ENGINE=InnoDB
+;

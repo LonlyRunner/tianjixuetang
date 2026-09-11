@@ -1,8 +1,11 @@
 package com.tianji.aigc.config;
 
 import com.tianji.aigc.advisor.RecordOptimizationAdvisor;
+import com.tianji.aigc.mapper.ChatMessageMapper;
 import com.tianji.aigc.memory.MyChatMemoryRepository;
 import com.tianji.aigc.memory.RedisChatMemoryRepository;
+import com.tianji.aigc.memory.jdbc.JdbcChatMemoryRepository;
+import com.tianji.aigc.memory.mongodb.MongoDBChatMemoryRepository;
 import com.tianji.aigc.tools.CourseTools;
 import com.tianji.aigc.tools.OrderTools;
 import com.tianji.common.constants.Constant;
@@ -17,9 +20,11 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.RetryContext;
 import org.springframework.retry.RetryListener;
@@ -71,13 +76,13 @@ public class SpringAIConfig {
     public ChatClient chatClient(@Qualifier("dashscopeChatModel") ChatModel dashScopeChatModel,
                                  Advisor loggerAdvisor, // 日志记录器
                                  Advisor messageChatMemoryAdvisor,
-                                 Advisor recordOptimizationAdvisor // 记录优化
-                                 // CourseTools courseTools, // 课程工具
-                                 // OrderTools orderTools // 预下单工具
+                                 Advisor recordOptimizationAdvisor, // 记录优化
+                                 CourseTools courseTools, // 课程工具
+                                 OrderTools orderTools // 预下单工具
     ) {
         return ChatClient.builder(dashScopeChatModel)
                 .defaultAdvisors(loggerAdvisor, messageChatMemoryAdvisor, recordOptimizationAdvisor) //添加 Advisor 功能增强
-                // .defaultTools(courseTools, orderTools)
+                .defaultTools(courseTools, orderTools) // 工具调用：课程查询、预下单
                 .build();
     }
 
@@ -98,9 +103,27 @@ public class SpringAIConfig {
         return new SimpleLoggerAdvisor();
     }
 
+    /**
+     * 会话记忆存储实现，通过 tj.ai.memory.type 配置切换：Redis / MYSQL / MongoDB
+     * 三种实现都实现了 ChatMemoryRepository 和 MyChatMemoryRepository 接口，
+     * 同一时刻只会装配其中一种
+     */
     @Bean
+    @ConditionalOnProperty(prefix = "tj.ai.memory", name = "type", havingValue = "Redis", matchIfMissing = true)
     public ChatMemoryRepository redisChatMemoryRepository() {
         return new RedisChatMemoryRepository();
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "tj.ai.memory", name = "type", havingValue = "MYSQL")
+    public ChatMemoryRepository jdbcChatMemoryRepository(ChatMessageMapper chatMessageMapper) {
+        return new JdbcChatMemoryRepository(chatMessageMapper);
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "tj.ai.memory", name = "type", havingValue = "MongoDB")
+    public ChatMemoryRepository mongoDBChatMemoryRepository(MongoTemplate mongoTemplate) {
+        return new MongoDBChatMemoryRepository(mongoTemplate);
     }
 
     @Bean

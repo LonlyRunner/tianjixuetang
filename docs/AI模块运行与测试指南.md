@@ -16,6 +16,8 @@
 新增/变更内容：
 
 - 新增 `tj-aigc` 微服务模块（aigc-service，端口 `8094`）：新建会话、热门问题、流式对话、system 提示词（nacos 热更新）、停止生成、Redis 会话记忆、停止后补存对话（doOnCancel 修复）、查询会话详情/历史会话、RAG 增强、智能体路由、工具调用、AI 文本处理、语音
+- **练习补齐**：实现 MySQL（`chat_message` 表）与 MongoDB（`chat_message` 集合）两种会话记忆存储，通过 `tj.ai.memory.type` 配置自动装配切换，与 Redis 方案共用 `MessageUtil` 序列化格式
+- **工具挂载**：`ENHANCE` 模式的 `ChatClient` 已挂载 `CourseTools`（课程查询）与 `OrderTools`（预下单），配合 RAG 实现"推荐课程 → 展示课程卡片 → 预下单"全链路（`PARAM` 事件推卡片数据）
 - 根 `pom.xml` 注册 `tj-aigc` 模块
 - `tj-gateway` 新增路由：`/ais/** → lb://aigc-service`
 - `tj-api` 新增 `AigcClient`（供自动回复等后续功能 Feign 调用）
@@ -110,7 +112,7 @@ API Key 获取：阿里百炼控制台 https://bailian.console.aliyun.com/ 。
 | 配置 | 可选值 | 说明 |
 | --- | --- | --- |
 | `tj.ai.chat-type` | `ENHANCE`（默认）/ `ROUTE` / `APP` | ENHANCE=RAG增强+工具（需 ES）；ROUTE=智能体路由（按提示词分发到 4 个 Agent）；APP=百炼应用（需配置 `tj.ai.dashscope.app-agent.id`） |
-| `tj.ai.memory.type` | `Redis`（当前唯一实现） | 会话记忆存储方式。**MYSQL / MongoDB 为课程文档中的练习项，本分支未提供实现**，可自行实现 `ChatMemoryRepository` 接口并按 `@ConditionalOnProperty` 装配（参考 `RedisChatMemoryRepository`） |
+| `tj.ai.memory.type` | `Redis`（默认）/ `MYSQL` / `MongoDB` | 会话记忆存储方式，三种实现均已提供，按配置自动装配切换（实现类：`RedisChatMemoryRepository` / `JdbcChatMemoryRepository` / `MongoDBChatMemoryRepository`）。`MYSQL` 需先执行 `sql/tj_aigc.sql` 中的 `chat_message` 建表；`MongoDB` 需在 nacos 中配置 `spring.data.mongodb.uri`（如 `mongodb://192.168.150.101:27017/tj_aigc`） |
 | `tj.ai.memory.max` | 默认 100 | 会话记忆最大消息条数（`MessageWindowChatMemory`，超出自动丢弃最旧消息） |
 | `tj.ai.prompt.system.*` | data-id/group | 各提示词在 nacos 中的 Data ID（支持热更新） |
 
