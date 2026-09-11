@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tianji.learning.mapper.PointsRecordMapper">
+
+    <insert id="createPointsRecordTable">
+        CREATE TABLE IF NOT EXISTS ${tableName} (
+                                                    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '积分记录id',
+                                                    `user_id` BIGINT NOT NULL COMMENT '学员id',
+                                                    `points` INT NOT NULL COMMENT '积分值',
+                                                    `type` TINYINT NOT NULL COMMENT '积分类型',
+                                                    `create_time` DATETIME NOT NULL COMMENT '创建时间',
+                                                    PRIMARY KEY (`id`) USING BTREE,
+                                                    INDEX `idx_user_id` (`user_id`) USING BTREE,
+                                                    INDEX `idx_create_time` (`create_time`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分明细'
+    </insert>
+
+    <insert id="migratePointsRecord">
+        INSERT INTO ${targetTable} (user_id, points, type, create_time)
+        SELECT user_id, points, type, create_time
+        FROM points_record
+        WHERE create_time &gt;= #{begin} AND create_time &lt;= #{end}
+    </insert>
+
+    <delete id="deleteMigratedPointsRecord">
+        DELETE FROM points_record
+        WHERE create_time &gt;= #{begin} AND create_time &lt;= #{end}
+    </delete>
+
+    <select id="countTable" resultType="java.lang.Long">
+        SELECT COUNT(1) FROM ${tableName}
+    </select>
+</mapper>

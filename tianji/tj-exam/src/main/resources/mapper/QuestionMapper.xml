@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tianji.exam.mapper.QuestionMapper">
+
+    <select id="countQuestionOfCreater" resultType="com.tianji.api.dto.IdAndNumDTO">
+        SELECT `creater` AS id, COUNT(1) AS num
+        FROM question
+        WHERE `creater`
+        <foreach collection="createrIds" open="IN (" close=")" item="id" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY `creater`
+    </select>
+    <select id="queryQuestionPage" resultType="com.tianji.exam.domain.po.Question">
+        SELECT q.*
+        FROM question q
+            LEFT JOIN (
+                SELECT question_id, COUNT(1) AS use_times
+                FROM question_biz
+                GROUP BY question_id
+            ) qb ON qb.question_id = q.id
+        <where>
+            q.type != 5
+            <if test="q.difficulty != null">
+                AND q.difficulty = #{q.difficulty}
+            </if>
+            <if test="q.creater != null">
+                AND q.creater = #{q.creater}
+            </if>
+            <if test="q.own != null and q.own">
+                AND q.creater = #{q.currentUser}
+            </if>
+            <if test="q.types != null and q.types.size() > 0">
+                AND q.type IN
+                <foreach collection="q.types" item="type" open="(" close=")" separator=",">
+                    #{type}
+                </foreach>
+            </if>
+            <if test="q.cateIds != null and q.cateIds.size() > 0">
+                AND (
+                    q.cate_id1 IN
+                    <foreach collection="q.cateIds" item="cateId" open="(" close=")" separator=",">
+                        #{cateId}
+                    </foreach>
+                    OR q.cate_id2 IN
+                    <foreach collection="q.cateIds" item="cateId" open="(" close=")" separator=",">
+                        #{cateId}
+                    </foreach>
+                    OR q.cate_id3 IN
+                    <foreach collection="q.cateIds" item="cateId" open="(" close=")" separator=",">
+                        #{cateId}
+                    </foreach>
+                )
+            </if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND q.name LIKE CONCAT('%', #{q.keyword}, '%')
+            </if>
+        </where>
+        <choose>
+            <when test="q.sortBy == 'use_times'">
+                ORDER BY IFNULL(qb.use_times, 0)
+                <choose>
+                    <when test="q.isAsc != null and q.isAsc">ASC</when>
+                    <otherwise>DESC</otherwise>
+                </choose>
+            </when>
+            <when test="q.sortBy == 'answer_times'">
+                ORDER BY q.answer_times
+                <choose>
+                    <when test="q.isAsc != null and q.isAsc">ASC</when>
+                    <otherwise>DESC</otherwise>
+                </choose>
+            </when>
+            <otherwise>
+                ORDER BY q.update_time DESC
+            </otherwise>
+        </choose>
+    </select>
+</mapper>

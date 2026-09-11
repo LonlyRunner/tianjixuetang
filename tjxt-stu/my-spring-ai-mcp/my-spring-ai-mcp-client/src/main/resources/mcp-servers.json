@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx.cmd",
+      "args": [
+        "-y",
+        "@executeautomation/playwright-mcp-server"
+      ]
+    },
+    "amap-maps": {
+      "command": "npx.cmd",
+      "args": [
+        "-y",
+        "@amap/amap-maps-mcp-server"
+      ],
+      "env": {
+        "AMAP_MAPS_API_KEY": "86aaa4285205f7a652d18c005795503d"
+      }
+    },
+    "redis": {
+      "command": "npx.cmd",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-redis",
+        "redis://:@127.0.0.1:6379"
+      ]
+    },
+    "itcast-mcp-server": {
+      "command": "C:\\jdks\\openjdk-17.0.2\\bin\\java.exe",
+      "args": [
+        "-Dfile.encoding=utf-8",
+        "-jar",
+        "F:\\code\\ai\\itcast-mcp-server\\itcast-mcp-server-stdio\\target\\itcast-mcp-server-stdio-1.0-SNAPSHOT.jar"
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+server:
+  port: 8100
+  tomcat:
+    uri-encoding: UTF-8
+
+spring:
+  application:
+    name: my-spring-ai-mcp-client
+
+  ai:
+    openai:
+      base-url: https://ws-in1go1ee7kvuywhh.cn-beijing.maas.aliyuncs.com/compatible-mode
+      api-key: sk-ws-H.EYHLHID.U0pT.MEUCIQC08qc4db2Yfkz_UYBYxTyNsguAKPYjz8rpZplHbG-mPgIgS7fVo226Hq2Ki22Q-Hwo7G3OkDBmgHCagW9wK3u6mxg
+      chat:
+        options:
+          model: qwen3.6-flash
+
+    mcp:
+      client:
+        enabled: true
+        name: ${spring.application.name}
+        version: 1.0.0
+        request-timeout: 30s
+        # ✅ 修复：使用 tool-callback 而不是 toolcallback
+        tool-callback:
+          enabled: true
+#        stdio:
+#          servers-configuration: classpath:mcp-servers.json
+          # 服务类型，指定为异步，支持 SYNC 和 ASYNC
+        type: ASYNC
+#        sse:
+#          connections:
+#            server1:
+#              url: http://localhost:8101 # 指定MCP Server服务器地址
+#            server2:
+#              url: http://localhost:8201 # 指定MCP Server服务器地址
